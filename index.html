@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Content ROI Calculator</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f4f6f8;
+  color: #1a1a1a;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+.page { max-width: 780px; margin: 0 auto; }
+
+.hero {
+  background: linear-gradient(135deg, #185FA5 0%, #3B6D11 100%);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.25rem;
+}
+.hero h1 { font-size: 22px; font-weight: 600; color: #fff; }
+.hero p { font-size: 14px; color: rgba(255,255,255,0.75); margin-top: 6px; }
+.embed-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 14px; background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3); border-radius: 8px;
+  padding: 7px 16px; font-size: 12px; color: #fff; cursor: pointer;
+  font-family: inherit;
+}
+.embed-btn:hover { background: rgba(255,255,255,0.25); }
+
+.section-label {
+  font-size: 11px; font-weight: 600; color: #64748b;
+  text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px;
+}
+
+.inputs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px; margin-bottom: 1.25rem;
+}
+.input-card {
+  background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 14px; padding: 1rem 1.1rem;
+}
+.input-card label { font-size: 11px; color: #64748b; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.input-card .val { font-size: 20px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
+.input-card input[type=range] { width: 100%; accent-color: #378ADD; cursor: pointer; }
+
+.comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.25rem; }
+.comp-card { border-radius: 14px; padding: 1.4rem; border: 1px solid #e2e8f0; position: relative; overflow: hidden; }
+.comp-card.before { background: #f8fafc; }
+.comp-card.after { background: #eaf3de; border-color: #97c459; }
+.comp-card .badge {
+  font-size: 10px; font-weight: 600; padding: 3px 10px;
+  border-radius: 20px; display: inline-block; margin-bottom: 10px;
+}
+.comp-card.before .badge { background: #e2e8f0; color: #64748b; }
+.comp-card.after .badge { background: #c0dd97; color: #27500a; }
+.comp-card .amount { font-size: 30px; font-weight: 700; }
+.comp-card.before .amount { color: #1a1a1a; }
+.comp-card.after .amount { color: #27500a; }
+.comp-card .sub { font-size: 11px; color: #64748b; margin-top: 5px; }
+.comp-card .stripe {
+  position: absolute; right: -20px; top: -20px;
+  width: 80px; height: 80px; border-radius: 50%; opacity: 0.1;
+}
+.comp-card.before .stripe { background: #94a3b8; }
+.comp-card.after .stripe { background: #3B6D11; }
+
+.roi-banner {
+  background: linear-gradient(90deg, #185FA5, #3B6D11);
+  border-radius: 14px; padding: 1.4rem 1.75rem;
+  margin-bottom: 1.25rem;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;
+}
+.roi-banner .roi-label { font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 4px; }
+.roi-banner .roi-num { font-size: 34px; font-weight: 700; color: #fff; }
+.roi-banner .roi-sub { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px; margin-bottom: 1.25rem;
+}
+.metric-card { border-radius: 10px; padding: 1rem; }
+.metric-card .mlabel { font-size: 11px; margin-bottom: 6px; font-weight: 500; }
+.metric-card .mval { font-size: 18px; font-weight: 700; }
+.mc-blue { background: #E6F1FB; } .mc-blue .mlabel { color: #185FA5; } .mc-blue .mval { color: #0C447C; }
+.mc-green { background: #EAF3DE; } .mc-green .mlabel { color: #3B6D11; } .mc-green .mval { color: #27500A; }
+.mc-teal { background: #E1F5EE; } .mc-teal .mlabel { color: #0F6E56; } .mc-teal .mval { color: #085041; }
+.mc-amber { background: #FAEEDA; } .mc-amber .mlabel { color: #854F0B; } .mc-amber .mval { color: #633806; }
+.mc-neutral { background: #f1f5f9; } .mc-neutral .mlabel { color: #64748b; } .mc-neutral .mval { color: #1a1a1a; }
+
+.chart-section {
+  background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 14px; padding: 1.4rem; margin-bottom: 1.25rem;
+}
+.chart-title { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-bottom: 10px; }
+.chart-legend { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+.chart-legend span { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #64748b; }
+.leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+.chart-bars { display: flex; align-items: flex-end; gap: 10px; height: 160px; }
+.bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.bars-pair { display: flex; align-items: flex-end; gap: 4px; height: 140px; width: 100%; }
+.bar { flex: 1; border-radius: 4px 4px 0 0; transition: height 0.35s ease; min-height: 2px; }
+.bar.manual { background: #378ADD; }
+.bar.ai { background: #639922; }
+.bar-label { font-size: 10px; color: #94a3b8; }
+
+.embed-modal {
+  display: none; background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 14px; padding: 1.25rem; margin-bottom: 1.25rem;
+}
+.embed-modal.open { display: block; }
+.embed-modal h3 { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 10px; }
+.embed-modal textarea {
+  width: 100%; background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 8px; padding: 10px; font-size: 12px;
+  font-family: 'Courier New', monospace; color: #1a1a1a;
+  resize: none; height: 80px;
+}
+.copy-btn {
+  margin-top: 8px; background: #185FA5; color: #fff;
+  border: none; border-radius: 8px; padding: 8px 18px;
+  font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 500;
+}
+.copy-btn:hover { background: #0C447C; }
+.copy-btn.copied { background: #3B6D11; }
+
+.note { font-size: 11px; color: #94a3b8; margin-top: 0.5rem; line-height: 1.6; }
+
+@media (max-width: 560px) {
+  .comparison { grid-template-columns: 1fr; }
+  .roi-banner { flex-direction: column; }
+  .inputs-grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-color-scheme: dark) {
+  body { background: #0f172a; color: #f1f5f9; }
+  .input-card { background: #1e293b; border-color: #334155; }
+  .input-card .val { color: #f1f5f9; }
+  .comp-card.before { background: #1e293b; border-color: #334155; }
+  .comp-card.before .amount { color: #f1f5f9; }
+  .comp-card.after { background: #173404; border-color: #3b6d11; }
+  .comp-card.after .amount { color: #c0dd97; }
+  .comp-card.after .badge { background: #3b6d11; color: #c0dd97; }
+  .chart-section { background: #1e293b; border-color: #334155; }
+  .chart-title { color: #f1f5f9; }
+  .mc-neutral { background: #1e293b; } .mc-neutral .mlabel { color: #94a3b8; } .mc-neutral .mval { color: #f1f5f9; }
+  .embed-modal { background: #1e293b; border-color: #334155; }
+  .embed-modal h3 { color: #f1f5f9; }
+  .embed-modal textarea { background: #0f172a; border-color: #334155; color: #f1f5f9; }
+  .section-label { color: #94a3b8; }
+  .note { color: #475569; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hero">
+    <h1>AI Content ROI Calculator</h1>
+    <p>Discover how much time, money, and effort you unlock by switching to AI-powered content creation</p>
+    <button class="embed-btn" onclick="toggleEmbed()">&#60;/&#62; &nbsp;Get embed code</button>
+  </div>
+
+  <div class="embed-modal" id="embedModal">
+    <h3>Embed this calculator on your website</h3>
+    <textarea id="embedCode" readonly></textarea>
+    <button class="copy-btn" id="copyBtn" onclick="copyEmbed()">Copy code</button>
+  </div>
+
+  <p class="section-label">Your numbers</p>
+  <div class="inputs-grid">
+    <div class="input-card">
+      <label>Hours / month on content</label>
+      <div class="val" id="hoursVal">40 hrs</div>
+      <input type="range" min="1" max="300" step="1" value="40" id="hours" oninput="update()">
+    </div>
+    <div class="input-card">
+      <label>Videos per month</label>
+      <div class="val" id="videosVal">10 videos</div>
+      <input type="range" min="1" max="120" step="1" value="10" id="videos" oninput="update()">
+    </div>
+    <div class="input-card">
+      <label>Cost per video (manual) ₹</label>
+      <div class="val" id="costVal">₹5,000</div>
+      <input type="range" min="500" max="150000" step="500" value="5000" id="cpv" oninput="update()">
+    </div>
+    <div class="input-card">
+      <label>AI tools spend / month ₹</label>
+      <div class="val" id="aiToolsVal">₹5,000</div>
+      <input type="range" min="500" max="30000" step="500" value="5000" id="aiTools" oninput="update()">
+    </div>
+    <div class="input-card">
+      <label>Hourly value of your time ₹</label>
+      <div class="val" id="hourlyVal">₹500</div>
+      <input type="range" min="100" max="10000" step="100" value="500" id="hourly" oninput="update()">
+    </div>
+    <div class="input-card">
+      <label>Revenue per video ₹</label>
+      <div class="val" id="revenueVal">₹2,000</div>
+      <input type="range" min="0" max="100000" step="500" value="2000" id="revPerVideo" oninput="update()">
+    </div>
+  </div>
+
+  <p class="section-label">Before vs after</p>
+  <div class="comparison">
+    <div class="comp-card before">
+      <div class="stripe"></div>
+      <div class="badge">Manual creation</div>
+      <div class="amount" id="manualCost">₹50,000</div>
+      <div class="sub" id="manualSub">per month</div>
+    </div>
+    <div class="comp-card after">
+      <div class="stripe"></div>
+      <div class="badge">With AI</div>
+      <div class="amount" id="aiCost">₹10,000</div>
+      <div class="sub" id="aiSub">per month</div>
+    </div>
+  </div>
+
+  <div class="roi-banner">
+    <div>
+      <div class="roi-label">ROI on AI tools spend</div>
+      <div class="roi-num" id="roiVal">800%</div>
+      <div class="roi-sub">for every ₹1 spent on AI tools</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="roi-label">Break-even point</div>
+      <div class="roi-num" id="breakEven">0.1 mo</div>
+      <div class="roi-sub">months to recover AI tools cost</div>
+    </div>
+  </div>
+
+  <p class="section-label">All metrics</p>
+  <div class="metrics-grid">
+    <div class="metric-card mc-green">
+      <div class="mlabel">Monthly savings</div>
+      <div class="mval" id="monthlySavings">₹40,000</div>
+    </div>
+    <div class="metric-card mc-blue">
+      <div class="mlabel">Annual savings</div>
+      <div class="mval" id="annualSavings">₹4,80,000</div>
+    </div>
+    <div class="metric-card mc-teal">
+      <div class="mlabel">Cost reduction</div>
+      <div class="mval" id="reduction">80%</div>
+    </div>
+    <div class="metric-card mc-amber">
+      <div class="mlabel">Hours freed / month</div>
+      <div class="mval" id="hoursFree">32 hrs</div>
+    </div>
+    <div class="metric-card mc-green">
+      <div class="mlabel">Time saved / year</div>
+      <div class="mval" id="timeSavedYear">384 hrs</div>
+    </div>
+    <div class="metric-card mc-blue">
+      <div class="mlabel">Time value saved / yr</div>
+      <div class="mval" id="timeValue">₹1,92,000</div>
+    </div>
+    <div class="metric-card mc-teal">
+      <div class="mlabel">Extra videos possible</div>
+      <div class="mval" id="extraVideos">+64 videos</div>
+    </div>
+    <div class="metric-card mc-amber">
+      <div class="mlabel">Revenue unlocked / yr</div>
+      <div class="mval" id="revenueUnlocked">₹1,28,000</div>
+    </div>
+    <div class="metric-card mc-neutral">
+      <div class="mlabel">5-year total savings</div>
+      <div class="mval" id="fiveYear">₹24,00,000</div>
+    </div>
+  </div>
+
+  <div class="chart-section">
+    <div class="chart-title">Monthly cost — manual vs AI (6 months)</div>
+    <div class="chart-legend">
+      <span><span class="leg-dot" style="background:#378ADD"></span>Manual</span>
+      <span><span class="leg-dot" style="background:#639922"></span>With AI</span>
+    </div>
+    <div class="chart-bars" id="chartBars"></div>
+  </div>
+
+  <p class="note">AI production cost fixed at ₹500/video. Hours freed estimated at 80% of current manual hours. Extra videos calculated from freed hours at 4 hrs/video average.</p>
+</div>
+
+<script>
+function fmt(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
+
+function update() {
+  const hours = +document.getElementById('hours').value;
+  const videos = +document.getElementById('videos').value;
+  const cpv = +document.getElementById('cpv').value;
+  const aiTools = +document.getElementById('aiTools').value;
+  const hourly = +document.getElementById('hourly').value;
+  const rev = +document.getElementById('revPerVideo').value;
+
+  document.getElementById('hoursVal').textContent = hours + ' hrs';
+  document.getElementById('videosVal').textContent = videos + ' videos';
+  document.getElementById('costVal').textContent = fmt(cpv);
+  document.getElementById('aiToolsVal').textContent = fmt(aiTools);
+  document.getElementById('hourlyVal').textContent = fmt(hourly);
+  document.getElementById('revenueVal').textContent = fmt(rev);
+
+  const manualTotal = videos * cpv;
+  const aiProd = videos * 500;
+  const aiTotal = aiProd + aiTools;
+  const saved = manualTotal - aiTotal;
+  const annual = saved * 12;
+  const reduction = manualTotal > 0 ? (saved / manualTotal) * 100 : 0;
+  const hoursFree = Math.round(hours * 0.8);
+  const timeSavedYr = hoursFree * 12;
+  const timeValue = timeSavedYr * hourly;
+  const extraVideos = Math.floor(hoursFree / 4);
+  const revenueUnlocked = extraVideos * 12 * rev;
+  const roi = aiTools > 0 ? Math.round((saved / aiTools) * 100) : 0;
+  const breakEven = saved > 0 ? (aiTools / saved) : 0;
+  const fiveYr = annual * 5;
+
+  document.getElementById('manualCost').textContent = fmt(manualTotal);
+  document.getElementById('manualSub').textContent = videos + ' videos × ' + fmt(cpv);
+  document.getElementById('aiCost').textContent = fmt(aiTotal);
+  document.getElementById('aiSub').textContent = fmt(aiProd) + ' prod + ' + fmt(aiTools) + ' tools';
+  document.getElementById('roiVal').textContent = (roi > 0 ? roi : 0) + '%';
+  document.getElementById('breakEven').textContent = saved > 0 ? breakEven.toFixed(1) + ' mo' : 'N/A';
+  document.getElementById('monthlySavings').textContent = saved > 0 ? fmt(saved) : '₹0';
+  document.getElementById('annualSavings').textContent = annual > 0 ? fmt(annual) : '₹0';
+  document.getElementById('reduction').textContent = Math.max(0, Math.round(reduction)) + '%';
+  document.getElementById('hoursFree').textContent = hoursFree + ' hrs';
+  document.getElementById('timeSavedYear').textContent = timeSavedYr + ' hrs';
+  document.getElementById('timeValue').textContent = fmt(timeValue);
+  document.getElementById('extraVideos').textContent = '+' + extraVideos + ' videos';
+  document.getElementById('revenueUnlocked').textContent = fmt(revenueUnlocked);
+  document.getElementById('fiveYear').textContent = annual > 0 ? fmt(fiveYr) : '₹0';
+
+  renderChart(manualTotal, aiTotal);
+  updateEmbedCode();
+}
+
+function renderChart(manual, ai) {
+  const container = document.getElementById('chartBars');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun'];
+  const max = Math.max(manual, ai, 1);
+  container.innerHTML = months.map(m => {
+    const mH = Math.max(2, Math.round((manual / max) * 130));
+    const aH = Math.max(2, Math.round((ai / max) * 130));
+    return `<div class="bar-group">
+      <div class="bars-pair">
+        <div class="bar manual" style="height:${mH}px;"></div>
+        <div class="bar ai" style="height:${aH}px;"></div>
+      </div>
+      <div class="bar-label">${m}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateEmbedCode() {
+  const code = `<iframe src="YOUR_DEPLOYED_URL_HERE" width="100%" height="750" frameborder="0" style="border-radius:14px;border:1px solid #e2e8f0;" title="AI Content ROI Calculator" loading="lazy"></iframe>`;
+  const ta = document.getElementById('embedCode');
+  if (ta) ta.value = code;
+}
+
+function toggleEmbed() {
+  const m = document.getElementById('embedModal');
+  m.classList.toggle('open');
+  updateEmbedCode();
+}
+
+function copyEmbed() {
+  const ta = document.getElementById('embedCode');
+  ta.select();
+  document.execCommand('copy');
+  const btn = document.getElementById('copyBtn');
+  btn.textContent = 'Copied!';
+  btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = 'Copy code'; btn.classList.remove('copied'); }, 2000);
+}
+
+update();
+</script>
+</body>
+</html>
